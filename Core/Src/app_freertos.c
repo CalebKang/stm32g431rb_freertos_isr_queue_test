@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,7 +70,14 @@ const osMessageQueueAttr_t myQueue01_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   
+#define debug(msg, ...) printf("%s:%d:" msg "\n", __FILE__, __LINE__, ## __VA_ARGS__)
+
+#define SWAP(a, b, type) do{ \
+                          type temp; \
+                          temp = a;  \
+                          a = b;     \
+                          b = temp;  \
+                         }while (0)
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -131,10 +138,12 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  uint32_t seq = 0;
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    debug("Default Taske Test time = %d, %s\r\n", (int)seq++, "is over");
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -160,15 +169,16 @@ void StartTask02(void *argument)
   HAL_SPI_TransmitReceive_DMA(&hspi1, tx_data, rx_data, SPI_DATA_MAX);
   uint8_t event = 0x00;
   static int event_i = 0;
-
+  uint32_t seq = 0;
   /* Infinite loop */
   for(;;)
   {
+    printf("Start Taske Test time = %d, %s\r\n", (int)seq++, "is over");
     if(osMessageQueueGet(myQueue01Handle, &event, NULL, 100) == osOK)
     {
       q_data[event_i++] = event;
     }
-    osDelay(1);
+    osDelay(1000);
   }
   /* USER CODE END StartTask02 */
 }
