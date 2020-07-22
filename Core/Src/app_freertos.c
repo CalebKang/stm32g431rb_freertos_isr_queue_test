@@ -52,7 +52,7 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 128 * 4
 };
 /* Definitions for myTask02 */
@@ -70,7 +70,7 @@ const osMessageQueueAttr_t myQueue01_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-#define debug(msg, ...) printf("%s:%d:" msg "\n", __FILE__, __LINE__, ## __VA_ARGS__)
+#define debug(msg, ...) printf("%s:%d:" msg "\r\n", __FILE__, __LINE__, ## __VA_ARGS__)
 
 #define SWAP(a, b, type) do{ \
                           type temp; \
@@ -134,16 +134,38 @@ void MX_FREERTOS_Init(void) {
   * @param  argument: Not used 
   * @retval None
   */
+#define SPI_DATA_MAX (10)
+static uint8_t tx_data[SPI_DATA_MAX];
+static uint8_t rx_data[SPI_DATA_MAX];
+static uint8_t q_data[SPI_DATA_MAX];
+
+extern SPI_HandleTypeDef hspi1;
+extern DMA_HandleTypeDef hdma_spi1_rx;
+extern DMA_HandleTypeDef hdma_spi1_tx;
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  uint8_t event = 0x00;
+  static int event_i = 0;
   uint32_t seq = 0;
   /* Infinite loop */
   for(;;)
   {
-    debug("Default Taske Test time = %d, %s\r\n", (int)seq++, "is over");
-    osDelay(1000);
+    if(osMessageQueueGet(myQueue01Handle, &event, NULL, 1000) == osOK)
+    {
+      q_data[event_i++] = event;
+      debug("O.K Default Taske Test time = %d, %s", (int)seq++, "is over");
+    }
+    else
+    {
+      debug("Time Out Default Taske Test time = %d, %s", (int)seq++, "is over");
+    }
+
+    if(event_i > 9)
+      event_i = 0;
+
+    //osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -154,31 +176,17 @@ void StartDefaultTask(void *argument)
 * @param argument: Not used
 * @retval None
 */
-#define SPI_DATA_MAX (10)
-static uint8_t tx_data[SPI_DATA_MAX];
-static uint8_t rx_data[SPI_DATA_MAX];
-static uint8_t q_data[SPI_DATA_MAX];
-
-extern SPI_HandleTypeDef hspi1;
-extern DMA_HandleTypeDef hdma_spi1_rx;
-extern DMA_HandleTypeDef hdma_spi1_tx;
 /* USER CODE END Header_StartTask02 */
 void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
-  HAL_SPI_TransmitReceive_DMA(&hspi1, tx_data, rx_data, SPI_DATA_MAX);
-  uint8_t event = 0x00;
-  static int event_i = 0;
   uint32_t seq = 0;
   /* Infinite loop */
   for(;;)
   {
-    printf("Start Taske Test time = %d, %s\r\n", (int)seq++, "is over");
-    if(osMessageQueueGet(myQueue01Handle, &event, NULL, 100) == osOK)
-    {
-      q_data[event_i++] = event;
-    }
-    osDelay(1000);
+    debug("Start Taske Test time = %d, %s", (int)seq++, "is over");
+    osDelay(100);
+    //HAL_SPI_TransmitReceive_DMA(&hspi1, tx_data, rx_data, SPI_DATA_MAX);
   }
   /* USER CODE END StartTask02 */
 }
